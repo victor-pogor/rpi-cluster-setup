@@ -34,5 +34,7 @@
 
 	"features": {
 		"github-cli": "latest"
-	}
+	}, 
+
+	"postCreateCommand": "bash .devcontainer/post-install.sh"
 }
