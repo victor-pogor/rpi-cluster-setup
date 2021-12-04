@@ -1,0 +1,15 @@
+---
+
+- name: Get the latest k8s dashboard version
+  shell: |
+    set -o pipefail
+    curl -w '%{url_effective}' -I -L -s -S {{ k8s_dashboard_url }}/latest -o /dev/null | sed -e 's|.*/||'
+  args:
+    executable: /bin/bash
+  register: k8s_dashboard_url_version
+  changed_when: true
+
+- name: Apply the k8s dashboard manifest
+  command: >-
+    sudo k3s kubectl create -f {{ k8s_dashboard_manifest_url | format(k8s_dashboard_url_version.stdout) }}
+  changed_when: true
