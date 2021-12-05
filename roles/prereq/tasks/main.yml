@@ -52,3 +52,9 @@
     path: /etc/sudoers
     validate: 'visudo -cf %s'
   when: ansible_distribution in ['CentOS', 'Red Hat Enterprise Linux']
+
+- name: "Change the host name to {{ inventory_hostname }}"
+  command: "hostnamectl set-hostname {{ inventory_hostname }}"
+  become: true
+  changed_when: ansible_hostname != inventory_hostname
+  notify: reboot

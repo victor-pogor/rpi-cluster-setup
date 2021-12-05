@@ -50,7 +50,7 @@
           traefik.ingress.kubernetes.io/ssl-redirect: "true"
       spec:
         rules:
-          - host: raspberrypi
+          - host: "{{ master_hostname }}"
             http:
               paths:
                 - path: /kubernetes
