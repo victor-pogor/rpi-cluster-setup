@@ -33,3 +33,30 @@
         - kind: ServiceAccount
           name: admin-user
           namespace: "{{ k8s_dashboard }}"
+
+- name: Create an ingress resource
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: kubernetes-dashboard-ingress
+        namespace: "{{ k8s_dashboard }}"
+        annotations:
+          kubernetes.io/ingress.class: "traefik"
+          traefik.ingress.kubernetes.io/rule-type: "PathPrefixStrip"
+          traefik.ingress.kubernetes.io/ssl-redirect: "true"
+      spec:
+        rules:
+          - host: raspberrypi
+            http:
+              paths:
+                - path: /kubernetes
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: "{{ k8s_dashboard }}"
+                      port:
+                        number: 443
