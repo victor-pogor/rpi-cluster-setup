@@ -53,8 +53,21 @@
     validate: 'visudo -cf %s'
   when: ansible_distribution in ['CentOS', 'Red Hat Enterprise Linux']
 
+- name: Check if the hostname should be changed
+  set_fact:
+    should_change_hostname: "{{ ansible_hostname != inventory_hostname }}"
+
 - name: "Change the host name to {{ inventory_hostname }}"
-  command: "hostnamectl set-hostname {{ inventory_hostname }}"
-  become: true
-  changed_when: ansible_hostname != inventory_hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  when: should_change_hostname
   notify: reboot
+
+- name: Fix /etc/hosts removing the old hostname
+  lineinfile:
+    line: "127.0.1.1 {{ inventory_hostname }} {{ ansible_hostname }}"
+    regexp: "^127.0.1.1"
+    state: present
+    insertafter: EOF
+    path: /etc/hosts
+  when: should_change_hostname
