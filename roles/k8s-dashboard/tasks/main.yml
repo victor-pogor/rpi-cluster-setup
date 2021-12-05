@@ -11,5 +11,5 @@
 
 - name: Apply the k8s dashboard manifest
   command: >-
-    sudo k3s kubectl create -f {{ k8s_dashboard_manifest_url | format(k8s_dashboard_url_version.stdout) }}
+    sudo k3s kubectl apply -f {{ k8s_dashboard_manifest_url | format(k8s_dashboard_url_version.stdout) }}
   changed_when: true

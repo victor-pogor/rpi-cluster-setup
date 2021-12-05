@@ -18,3 +18,13 @@
   become: yes
   roles:
     - role: k3s/node
+
+- hosts: localhost
+  gather_facts: false
+  connection: local
+  environment:
+    K8S_AUTH_KUBECONFIG: "{{ lookup('env', 'HOME') }}/.kube/config"
+    K8S_AUTH_HOST: https://{{ master_ip }}:6443
+  become: yes
+  roles:
+    - role: k8s-manifests/k8s-dashboard-remote-access
