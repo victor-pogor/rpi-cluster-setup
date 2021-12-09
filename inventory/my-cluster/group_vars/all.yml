@@ -6,3 +6,4 @@ master_ip: "{{ hostvars[groups['master'][0]]['ansible_host'] | default(groups['m
 master_hostname: "{{ groups['master'][0] }}"
 extra_server_args: ""
 extra_agent_args: ""
+cert_issuer_name: "{{ master_hostname }}-ca-issuer"

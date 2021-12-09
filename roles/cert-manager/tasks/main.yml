@@ -1,0 +1,26 @@
+---
+- name: Add {{ cert_manager }} helm repo
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: "{{ helm_chart_url }}"
+
+- name: Install {{ cert_manager }} chart
+  kubernetes.core.helm:
+    name: "{{ cert_manager }}"
+    namespace: "{{ cert_manager }}"
+    chart_ref: jetstack/{{ cert_manager }}
+    create_namespace: true
+    values:
+      installCRDs: true
+
+- name: Create a self-signed cluster issuer
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: "{{ cert_manager }}.io/v1"
+      kind: ClusterIssuer
+      metadata:
+        name: "{{ cert_issuer_name }}"
+      spec:
+        selfSigned: {}

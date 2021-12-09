@@ -11,10 +11,15 @@
 
 - hosts: master
   become: yes
+  environment:
+    K8S_AUTH_KUBECONFIG: ~{{ ansible_user }}/.kube/config
+    K8S_AUTH_HOST: https://{{ master_ip }}:6443
+    HELM_KUBEAPISERVER: https://{{ master_ip }}:6443
   roles:
     - role: k3s/master
     - role: k8s-dashboard
     - role: helm-install
+    - role: cert-manager
 
 - hosts: node
   become: yes
@@ -29,4 +34,4 @@
     K8S_AUTH_HOST: https://{{ master_ip }}:6443
   become: yes
   roles:
-    - role: k8s-manifests/k8s-dashboard-remote-access
+  # - role: k8s-manifests/k8s-dashboard-remote-access
