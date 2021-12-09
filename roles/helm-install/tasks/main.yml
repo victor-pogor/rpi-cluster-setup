@@ -1,0 +1,13 @@
+---
+
+- name: download helm install script to tmp dir
+  get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    dest: /tmp/get_helm.sh
+    mode: 0700
+
+- name: execute helm install script
+  command: bash get_helm.sh
+  args:
+    chdir: /tmp/
+  changed_when: true

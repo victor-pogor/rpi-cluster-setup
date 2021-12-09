@@ -13,6 +13,7 @@
   roles:
     - role: k3s/master
     - role: k8s-dashboard
+    - role: helm-install
 
 - hosts: node
   become: yes
