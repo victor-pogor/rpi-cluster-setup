@@ -59,18 +59,18 @@
     owner: "{{ ansible_user }}"
     mode: "u=rw,g=,o="
 
-- name: Copy config file to local machine
-  fetch:
-    src: ~{{ ansible_user }}/.kube/config
-    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
-    flat: yes
-
 - name: "Replace https://localhost:6443 by https://{{ master_ip }}:6443"
   command: >-
     k3s kubectl config set-cluster default
       --server=https://{{ master_ip }}:6443
       --kubeconfig ~{{ ansible_user }}/.kube/config
   changed_when: true
+
+- name: Copy config file to local machine
+  fetch:
+    src: ~{{ ansible_user }}/.kube/config
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+    flat: yes
 
 - name: Create kubectl symlink
   file:
