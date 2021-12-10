@@ -1,0 +1,15 @@
+---
+- name: Add {{ traefik }} helm repo
+  kubernetes.core.helm_repository:
+    name: "{{ traefik }}"
+    repo_url: "{{ helm_chart_url }}"
+
+- name: Install {{ traefik }} chart
+  kubernetes.core.helm:
+    name: "{{ traefik }}"
+    namespace: "{{ traefik }}"
+    chart_ref: "{{ traefik }}/{{ traefik }}"
+    create_namespace: true
+    values:
+      additionalArguments:
+        - --serversTransport.insecureSkipVerify=true

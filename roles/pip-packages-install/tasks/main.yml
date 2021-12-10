@@ -21,3 +21,11 @@
 - name: Install jsonpatch python package
   pip:
     name: jsonpatch
+
+- name: Install pyhelm python package
+  pip:
+    name: pyhelm
+
+- name: Install grpcio python package
+  pip:
+    name: grpcio

@@ -19,6 +19,7 @@
     - role: k3s/master
     - role: k8s-dashboard
     - role: helm-install
+    - role: ingress-controllers/traefik
     - role: cert-manager
 
 - hosts: node
