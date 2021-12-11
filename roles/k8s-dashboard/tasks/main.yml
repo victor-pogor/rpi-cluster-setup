@@ -1,15 +1,104 @@
 ---
+- name: Add {{ kubernetes_dashboard }} helm repo
+  kubernetes.core.helm_repository:
+    name: "{{ kubernetes_dashboard }}"
+    repo_url: "{{ helm_chart_url }}"
 
-- name: Get the latest k8s dashboard version
-  shell: |
-    set -o pipefail
-    curl -w '%{url_effective}' -I -L -s -S {{ k8s_dashboard_url }}/latest -o /dev/null | sed -e 's|.*/||'
-  args:
-    executable: /bin/bash
-  register: k8s_dashboard_url_version
-  changed_when: true
+- name: Install {{ kubernetes_dashboard }} chart
+  kubernetes.core.helm:
+    name: "{{ kubernetes_dashboard }}"
+    namespace: "{{ kubernetes_dashboard }}"
+    chart_ref: "{{ kubernetes_dashboard }}/{{ kubernetes_dashboard }}"
+    create_namespace: true
+    values:
+      extraArgs:
+        - --enable-insecure-login
+      service:
+        externalPort: 8443
 
-- name: Apply the k8s dashboard manifest
-  command: >-
-    sudo k3s kubectl apply -f {{ k8s_dashboard_manifest_url | format(k8s_dashboard_url_version.stdout) }}
-  changed_when: true
+- name: Create {{ kubernetes_dashboard }} certificate
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        name: "{{ kubernetes_dashboard }}-cert"
+        namespace: "{{ kubernetes_dashboard }}"
+      spec:
+        secretName: "{{ kubernetes_dashboard }}-cert-secret"
+        dnsNames:
+          - "{{ master_hostname }}"
+          - "*.{{ master_hostname }}"
+        issuerRef:
+          name: "{{ cert_issuer_name }}"
+          kind: ClusterIssuer
+
+- name: Create a Traefik middleware for removing the prefix before forwarding the request
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: Middleware
+      metadata:
+        name: "{{ kubernetes_dashboard }}-strip-prefix-middleware"
+        namespace: "{{ kubernetes_dashboard }}"
+      spec:
+        stripPrefix:
+          prefixes:
+            - "{{ kubernetes_dashboard_prefix }}"
+
+- name: Create an IngressRoute for {{ kubernetes_dashboard }}
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: "{{ kubernetes_dashboard }}"
+        namespace: "{{ kubernetes_dashboard }}"
+      spec:
+        entryPoints:
+          - web
+          - websecure
+        routes:
+          - match: Host(`{{ master_hostname }}`) && PathPrefix(`{{ kubernetes_dashboard_prefix }}`)
+            kind: Rule
+            services:
+              - name: "{{ kubernetes_dashboard }}"
+                kind: Service
+                port: 8443
+            middlewares:
+              - name: "{{ kubernetes_dashboard }}-strip-prefix-middleware"
+        tls:
+          secretName: "{{ kubernetes_dashboard }}-cert-secret"
+
+- name: Create an admin service account
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: admin-user
+        namespace: "{{ kubernetes_dashboard }}"
+
+- name: Create an admin user role
+  k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: admin-user
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - kind: ServiceAccount
+          name: admin-user
+          namespace: "{{ kubernetes_dashboard }}"

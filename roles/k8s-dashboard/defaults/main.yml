@@ -1,3 +1,4 @@
 ---
-k8s_dashboard_url: https://github.com/kubernetes/dashboard/releases
-k8s_dashboard_manifest_url: https://raw.githubusercontent.com/kubernetes/dashboard/%s/aio/deploy/recommended.yaml
+helm_chart_url: https://kubernetes.github.io/dashboard/
+kubernetes_dashboard: kubernetes-dashboard
+kubernetes_dashboard_prefix: /kubernetes

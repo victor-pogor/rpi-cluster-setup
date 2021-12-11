@@ -21,6 +21,7 @@
     - role: helm-install
     - role: ingress-controllers/traefik
     - role: cert-manager
+    - role: k8s-dashboard
 
 - hosts: node
   become: yes
