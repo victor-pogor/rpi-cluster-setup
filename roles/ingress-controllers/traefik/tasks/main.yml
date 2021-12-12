@@ -35,8 +35,7 @@
       spec:
         secretName: "{{ traefik }}-cert-secret"
         dnsNames:
-          - "{{ master_hostname }}"
-          - "*.{{ master_hostname }}"
+          - "{{ ingress_hostname }}"
         issuerRef:
           name: "{{ cert_issuer_name }}"
           kind: ClusterIssuer
@@ -56,7 +55,7 @@
           - web
           - websecure
         routes:
-          - match: Host(`{{ master_hostname }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+          - match: Host(`{{ ingress_hostname }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
             kind: Rule
             services:
               - name: api@internal

@@ -30,8 +30,7 @@
       spec:
         secretName: "{{ kube_prometheus_stack }}-cert-secret"
         dnsNames:
-          - "{{ master_hostname }}"
-          - "*.{{ master_hostname }}"
+          - "{{ ingress_hostname }}"
         issuerRef:
           name: "{{ cert_issuer_name }}"
           kind: ClusterIssuer
@@ -66,7 +65,7 @@
           - web
           - websecure
         routes:
-          - match: Host(`{{ master_hostname }}`) && PathPrefix(`{{ kube_prometheus_stack_prefix }}`)
+          - match: Host(`{{ ingress_hostname }}`) && PathPrefix(`{{ kube_prometheus_stack_prefix }}`)
             kind: Rule
             services:
               - name: kube-prometheus-stack-grafana

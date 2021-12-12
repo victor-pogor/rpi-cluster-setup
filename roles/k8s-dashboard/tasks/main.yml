@@ -29,8 +29,7 @@
       spec:
         secretName: "{{ kubernetes_dashboard }}-cert-secret"
         dnsNames:
-          - "{{ master_hostname }}"
-          - "*.{{ master_hostname }}"
+          - "{{ ingress_hostname }}"
         issuerRef:
           name: "{{ cert_issuer_name }}"
           kind: ClusterIssuer
@@ -65,7 +64,7 @@
           - web
           - websecure
         routes:
-          - match: Host(`{{ master_hostname }}`) && PathPrefix(`{{ kubernetes_dashboard_prefix }}`)
+          - match: Host(`{{ ingress_hostname }}`) && PathPrefix(`{{ kubernetes_dashboard_prefix }}`)
             kind: Rule
             services:
               - name: "{{ kubernetes_dashboard }}"
