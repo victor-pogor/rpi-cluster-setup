@@ -1,0 +1,78 @@
+---
+- name: Add {{ kube_prometheus_stack }} helm repo
+  kubernetes.core.helm_repository:
+    name: "{{ prometheus_community }}"
+    repo_url: "{{ helm_chart_url }}"
+
+- name: Install {{ kube_prometheus_stack }} chart
+  kubernetes.core.helm:
+    name: "{{ kube_prometheus_stack }}"
+    namespace: "{{ kube_prometheus_stack }}"
+    chart_ref: "{{ prometheus_community }}/{{ kube_prometheus_stack }}"
+    create_namespace: true
+    values:
+      grafana:
+        grafana.ini:
+          server:
+            domain: "{{ master_hostname }}"
+            root_url: "%(protocol)s://%(domain)s:%(http_port)s{{ kube_prometheus_stack_prefix }}"
+
+- name: Create {{ kube_prometheus_stack }} certificate
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        name: "{{ kube_prometheus_stack }}-cert"
+        namespace: "{{ kube_prometheus_stack }}"
+      spec:
+        secretName: "{{ kube_prometheus_stack }}-cert-secret"
+        dnsNames:
+          - "{{ master_hostname }}"
+          - "*.{{ master_hostname }}"
+        issuerRef:
+          name: "{{ cert_issuer_name }}"
+          kind: ClusterIssuer
+
+- name: Create a Traefik middleware for removing the prefix before forwarding the request
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: Middleware
+      metadata:
+        name: "{{ kube_prometheus_stack }}-strip-prefix-middleware"
+        namespace: "{{ kube_prometheus_stack }}"
+      spec:
+        stripPrefix:
+          prefixes:
+            - "{{ kube_prometheus_stack_prefix }}"
+
+- name: Create an IngressRoute for {{ kube_prometheus_stack }}
+  k8s:
+    state: present
+    apply: true
+    definition:
+      apiVersion: traefik.containo.us/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: "{{ kube_prometheus_stack }}"
+        namespace: "{{ kube_prometheus_stack }}"
+      spec:
+        entryPoints:
+          - web
+          - websecure
+        routes:
+          - match: Host(`{{ master_hostname }}`) && PathPrefix(`{{ kube_prometheus_stack_prefix }}`)
+            kind: Rule
+            services:
+              - name: kube-prometheus-stack-grafana
+                kind: Service
+                port: 80
+            middlewares:
+              - name: "{{ kube_prometheus_stack }}-strip-prefix-middleware"
+        tls:
+          secretName: "{{ kube_prometheus_stack }}-cert-secret"

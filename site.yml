@@ -22,6 +22,7 @@
     - role: ingress-controllers/traefik
     - role: cert-manager
     - role: k8s-dashboard
+    - role: kube-prometheus-stack
 
 - hosts: node
   become: yes
